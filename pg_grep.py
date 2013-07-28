@@ -150,10 +150,11 @@ def main():
     if len(sys.argv[1:]) == 0:
         exitOnUsage()
     else:
-        if options.brute == 1:
-            getRowsBrute(username, searchvalue)
-        else:
-            getRows(username, datatype, searchvalue)
+        getRows(username, datatype, searchvalue)
+##        if options.brute == 1:
+##            getRowsBrute(username, searchvalue)
+##        else:
+##            getRows(username, datatype, searchvalue)
                          
            
     
