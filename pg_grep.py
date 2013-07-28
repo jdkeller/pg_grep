@@ -7,6 +7,7 @@ import sys
 import psycopg2
 import optparse
 import re
+import time
 
 #
 # getDatabaseConnection
@@ -149,7 +150,11 @@ def main():
     if len(sys.argv[1:]) == 0:
         exitOnUsage()
     else:
+        startTime = time.time()
         getRows(username, password, datatype, searchvalue)
+        endTime = time.time()
+        # DEBUG Line. Used to calculate time. Use for optimization.
+        print "Time to execute: ", (endTime - startTime), " seconds"
 ##        if options.brute == 1:
 ##            getRowsBrute(username, searchvalue)
 ##        else:
