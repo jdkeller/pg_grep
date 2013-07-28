@@ -14,8 +14,7 @@ import re
 # In:  username, password
 # Out: Active database connection to requested database
 
-# def getDatabaseConnection(username, password):
-def getDatabaseConnection():
+def getDatabaseConnection(username, password):
     try:
         cxstring = "host='localhost' dbname='development' user='"+username+"' password='"+password+"'"
 
@@ -29,8 +28,8 @@ def getDatabaseConnection():
 
 ###################
 
-def getRows(username, datatype, searchvalue):
-    cur = getDatabaseConnection().cursor()
+def getRows(username, password, datatype, searchvalue):
+    cur = getDatabaseConnection(username, password).cursor()
 
     getTablesAndColumnsStatement = "SELECT table_name, column_name FROM information_schema.columns WHERE table_name IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') AND data_type='"+datatype+"'"
     
@@ -49,7 +48,7 @@ def getRows(username, datatype, searchvalue):
                 getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" LIKE '%"+searchvalue+"%'"
             
             try:
-                cur = getDatabaseConnection().cursor()
+                cur = getDatabaseConnection(username, password).cursor()
                 cur.execute(getValuesStatement)
                 getValuesRows = cur.fetchall()
 
@@ -150,7 +149,7 @@ def main():
     if len(sys.argv[1:]) == 0:
         exitOnUsage()
     else:
-        getRows(username, datatype, searchvalue)
+        getRows(username, password, datatype, searchvalue)
 ##        if options.brute == 1:
 ##            getRowsBrute(username, searchvalue)
 ##        else:
