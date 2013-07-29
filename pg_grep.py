@@ -32,7 +32,10 @@ def getDatabaseConnection(username, password):
 def getRows(username, password, datatype, searchvalue):
     cur = getDatabaseConnection(username, password).cursor()
 
-    getTablesAndColumnsStatement = "SELECT table_name, column_name FROM information_schema.columns WHERE table_name IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') AND data_type='"+datatype+"'"
+    getTablesAndColumnsStatement = "SELECT table_name, column_name FROM "
+    getTablesAndColumnsStatement += "information_schema.columns WHERE table_name IN "
+    getTablesAndColumnsStatement += "(SELECT tablename FROM pg_tables WHERE schemaname = 'public') "
+    getTablesAndColumnsStatement += "AND data_type='"+datatype+"'"
     
     try:
         cur.execute(getTablesAndColumnsStatement)
@@ -131,8 +134,18 @@ NOTE: Does not currently support PostGIS data types.
     sys.exit(0)
     
 ###################
+        
+def exitOnUnsupportedDataType(datatype):
+    print """
+The datatype """ + datatype + """ is currently not supported.
+"""
+
+    sys.exit(0)
+    
+###################
     
 def main():
+        
     parser = optparse.OptionParser("\n Standard usage: %prog -U username -t 'data_type' -s 'value to search for' \n Brute Force Example: %prog -U username -b -s 'value to search for'")
     parser.add_option("-U", "--user", dest="username", type="string", help="Specify database user name")
     parser.add_option("-p", "--password", dest="password", type="string", help="Specify database password")
@@ -145,13 +158,20 @@ def main():
     datatype = options.datatype
     searchvalue = options.searchvalue
     password = options.password
+
+    # Create unsupported datatypes list, maybe make it a method?
+    unsupported_datatypes_list = ["bytea"]
     
     
     if len(sys.argv[1:]) == 0:
         exitOnUsage()
     else:
         startTime = time.time()
-        getRows(username, password, datatype, searchvalue)
+        if datatype in unsupported_datatypes_list:
+            exitOnUnsupportedDataType(datatype)
+        else:
+            getRows(username, password, datatype, searchvalue)
+
         endTime = time.time()
         # DEBUG Line. Used to calculate time. Use for optimization.
         print "Time to execute: ", (endTime - startTime), " seconds"
