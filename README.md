@@ -1,5 +1,6 @@
 pg_grep
 =======
+*IN PROGRESS*
 
 A python tool for searching PostgreSQL databases when structure is unknown
 
