@@ -9,12 +9,6 @@ import optparse
 import re
 import time
 
-#
-# getDatabaseConnection
-#
-# In:  username, password
-# Out: Active database connection to requested database
-
 def getDatabaseConnection(username, password):
     try:
         cxstring = "host='localhost' dbname='development' user='"+username+"' password='"+password+"'"
@@ -29,7 +23,7 @@ def getDatabaseConnection(username, password):
 
 ###################
 
-def getRows(username, password, datatype, searchvalue):
+def getRows(username, password, datatype, searchvalue, ignorecase):
     cur = getDatabaseConnection(username, password).cursor()
 
     getTablesAndColumnsStatement = "SELECT table_name, column_name FROM "
@@ -49,8 +43,10 @@ def getRows(username, password, datatype, searchvalue):
             if datatype == "integer" or datatype == "double precision":
                 getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" = "+str(searchvalue)
             else:
-                getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" LIKE '%"+searchvalue+"%'"
-            
+                if ignorecase:
+                    getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" ILIKE '%"+searchvalue+"%'"
+                else:
+                    getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" LIKE '%"+searchvalue+"%'"
             try:
                 cur = getDatabaseConnection(username, password).cursor()
                 cur.execute(getValuesStatement)
@@ -80,7 +76,8 @@ Options:
     -p PASSWORD, --password=PASSWORD        Specifiy database password
     -t DATATYPE, --type=DATATYPE            Specify column data_type. Supports PostgreSQL native data types.
     -s SEARCHVALUE, --search=SEARCHVALUE    Specify what to search for
-    
+    -i, --ignore-case                       Used to search case insensitively. When used with numeric data types, this will have no effect.
+
 NOTE: Does not currently support PostGIS data types.
 
 """
@@ -106,7 +103,7 @@ def main():
     parser.add_option("-t", "--type", dest="datatype", type="string", help="Specify column data_type. Supports PostgreSQL native data types.")    
     parser.add_option("-s", "--search", dest="searchvalue", type="string", help="Specify what to search for")
     # include a -i command
-    #parser.add_option("-i", "--ignore-case", dest="ignorecase", action="count", help="Used to search case insensitively. When used with numeric data types, this will have no effect.")
+    parser.add_option("-i", "--ignore-case", dest="ignorecase", action="count", help="Used to search case insensitively. When used with numeric data types, this will have no effect.")
 
     (options, arguments) = parser.parse_args()
     username = options.username
@@ -126,7 +123,10 @@ def main():
         if datatype in unsupported_datatypes_list:
             exitOnUnsupportedDataType(datatype)
         else:
-            getRows(username, password, datatype, searchvalue)
+            if options.ignorecase == 1:
+                getRows(username, password, datatype, searchvalue, 1)
+            else:
+                getRows(username, password, datatype, searchvalue, 0)
 
         endTime = time.time()
         # DEBUG Line. Used to calculate time. Use for optimization.
@@ -135,11 +135,6 @@ def main():
 ##            getRowsBrute(username, searchvalue)
 ##        else:
 ##            getRows(username, datatype, searchvalue)
-                         
-           
-    
-##    exitOnUsage()
-##    #getRows("josh", "integer", "1")
 
 #
 # Redirect to main
