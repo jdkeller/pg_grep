@@ -68,51 +68,6 @@ def getRows(username, password, datatype, searchvalue):
         sys.exit(0)
     
 ###################
-
-# In retrospect, this option doesn't even seem reasonable. There would at least be string
-# or numeric types or it should be smart enough to know what to do. Like, if it encounters a
-# numeric type, reroute to one query.
-#
-# Use a regex. If it has an alpha char, assume string style search.
-# For now, this functionality is not accessible, selecting '-b' throws
-# "no such option" error
-def getRowsBrute(username, searchvalue):
-    cur = getDatabaseConnection().cursor()
-
-    getTablesAndColumnsStatement = "SELECT table_name, column_name FROM information_schema.columns WHERE table_name IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')"
-    
-    try:
-        cur.execute(getTablesAndColumnsStatement)
-        getTablesAndColumnsRows = cur.fetchall()
-
-        for getTablesAndColumnsRow in getTablesAndColumnsRows:
-            table_name = getTablesAndColumnsRow[0]
-            column_name = getTablesAndColumnsRow[1]
-
-# Need to define all possibilities for all data_types
-            if bool(re.search("[A-Za-z]", searchvalue)):
-                # Assume string
-                getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" LIKE '%"+searchvalue+"%'"
-            else:
-                getValuesStatement = "SELECT "+column_name+" FROM "+table_name+" WHERE "+column_name+" = "+str(searchvalue)
-            
-            try:
-                cur = getDatabaseConnection().cursor()
-                cur.execute(getValuesStatement)
-                getValuesRows = cur.fetchall()
-
-                for getValuesRow in getValuesRows:
-                    value = getValuesRow[0]
-                    print table_name+"."+column_name+": "+ str(value)
-                    cur.close()
-            except Exception, e:
-                print "Program encountered an exception: %s" % e
-    except Exception, e:
-        print "Program encountered an exception: %s" % e
-        
-        sys.exit(0)
-    
-###################
         
 def exitOnUsage():
     print """
@@ -129,8 +84,7 @@ Options:
 NOTE: Does not currently support PostGIS data types.
 
 """
-    #Brute Force Example: pg_grep.py -U username -b -s 'value to search for'
-    #-b, --brute                             Not to be used in conjuction with -t (--type). if you do not know the datatype for the column you wish to search, this option will search all columns in all tables. (Severly slow process)
+  
     sys.exit(0)
     
 ###################
@@ -151,7 +105,8 @@ def main():
     parser.add_option("-p", "--password", dest="password", type="string", help="Specify database password")
     parser.add_option("-t", "--type", dest="datatype", type="string", help="Specify column data_type. Supports PostgreSQL native data types.")    
     parser.add_option("-s", "--search", dest="searchvalue", type="string", help="Specify what to search for")
-    #parser.add_option("-b", "--brute", dest="brute", action="count", help="Not to be used in conjuction with -t (--type). if you do not know the datatype for the column you wish to search, this option will search all columns in all tables. (Severly slow process)")
+    # include a -i command
+    #parser.add_option("-i", "--ignore-case", dest="ignorecase", action="count", help="Used to search case insensitively. When used with numeric data types, this will have no effect.")
 
     (options, arguments) = parser.parse_args()
     username = options.username
@@ -162,6 +117,7 @@ def main():
     # Create unsupported datatypes list, maybe make it a method?
     unsupported_datatypes_list = ["bytea"]
     
+
     
     if len(sys.argv[1:]) == 0:
         exitOnUsage()
